@@ -1,0 +1,200 @@
+-- Создание таблицы Type
+CREATE TABLE Type (
+  commentID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  message NVARCHAR(50) NOT NULL
+);
+
+-- Создание таблицы Customer
+CREATE TABLE Customer (
+  userID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  fio NVARCHAR(50) NOT NULL,
+  phone NVARCHAR(50) NOT NULL,
+  login NVARCHAR(50) NOT NULL,
+  password NVARCHAR(50) NOT NULL,
+  typeID INT NOT NULL,
+  FOREIGN KEY (typeID) REFERENCES Type(commentID)
+);
+
+-- Создание таблицы Status
+CREATE TABLE Status (
+  statusID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  requestStatus NVARCHAR(50) NOT NULL
+);
+
+-- Создание таблицы HomeTech
+CREATE TABLE HomeTech (
+  typeEqipmentID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  homeTechType NVARCHAR(50) NOT NULL,
+  homeTechModel NVARCHAR(100) NOT NULL
+);
+
+-- Создание таблицы Parts
+CREATE TABLE Parts (
+  partsID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  repairParts NVARCHAR(100) NOT NULL,
+  count INT NOT NULL,
+  masterID INT NOT NULL,
+  FOREIGN KEY (masterID) REFERENCES Customer(userID)
+);
+
+-- Создание таблицы Request
+CREATE TABLE Request (
+  requestID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  startDate DATE NOT NULL,
+  typeEqipmentID INT NOT NULL,
+  problemDescryption NVARCHAR(50) NOT NULL,
+  statusID INT NOT NULL,
+  completionDate DATE,
+  partsID INT,
+  masterID INT,
+  clientID INT NOT NULL,
+  FOREIGN KEY (typeEqipmentID) REFERENCES HomeTech(typeEqipmentID),
+  FOREIGN KEY (statusID) REFERENCES Status(statusID),
+  FOREIGN KEY (partsID) REFERENCES Parts(partsID),
+  FOREIGN KEY (masterID) REFERENCES Customer(userID),
+  FOREIGN KEY (clientID) REFERENCES Customer(userID)
+);
+
+-- Создание таблицы Comment
+CREATE TABLE Comment (
+  commentID INT PRIMARY KEY IDENTITY(1,1), -- Использование IDENTITY вместо AUTO_INCREMENT
+  message NVARCHAR(100) NOT NULL,
+  masterID INT NOT NULL,
+  requestID INT NOT NULL,
+  FOREIGN KEY (masterID) REFERENCES Customer(userID),
+  FOREIGN KEY (requestID) REFERENCES Request(requestID)
+);
+
+ Таблица статусов
+INSERT INTO Type (message) VALUES
+('Менеджер'),
+('Мастер'),
+('Оператор'),
+('Заказчик');
+
+
+-- Таблица пользователей
+SET IDENTITY_INSERT Customer ON;
+
+INSERT INTO Customer (userID, fio, phone, login, password, typeID) VALUES
+(1, 'Трубин Никита Юрьевич', '89210563128', 'kasoo', 'root', 1),
+(2, 'Мурашов Андрей Юрьевич', '89535078985', 'murashov123', 'qwerty', 2),
+(3, 'Степанов Андрей Викторович', '89210673849', 'test1', 'test1', 2),
+(4, 'Перина Анастасия Денисовна', '89990563748', 'perinaAD', '250519', 3),
+(5, 'Мажитова Ксения Сергеевна', '89994563847', 'krutiha1234567', '1234567890', 3),
+(6, 'Семенова Ясмина Марковна', '89994563847', 'login1', 'pass1', 2),
+(7, 'Баранова Эмилия Марковна', '89994563841', 'login2', 'pass2', 4),
+(8, 'Егорова Алиса Платоновна', '89994563842', 'login3', 'pass3', 4),
+(9, 'Титов Максим Иванович', '89994563843', 'login4', 'pass4', 4),
+(10, 'Иванов Марк Максимович', '89994563844', 'login5', 'pass5', 2);
+
+SET IDENTITY_INSERT Customer OFF;
+
+-- Таблица статусов
+INSERT INTO Status (requestStatus) VALUES
+('В процессе ремонта'),
+('Готова к выдаче'),
+('Новая заявка');
+
+
+-- Сбросить счетчик идентификатора на 1
+DBCC CHECKIDENT ('Comment', RESEED, 0);
+
+-- Таблица комментариев
+INSERT INTO Comment (message, masterID, requestID) VALUES
+('Интересная поломка', 2, 1),
+('Очень странно, будем разбираться!', 3, 2),
+('Скорее всего потребуется мотор обдува!', 2, 7),
+('Интересная поломка', 2, 1),
+('Очень странно, будем разбираться!', 3, 6);
+
+ALTER TABLE Request ADD homeTechModel VARCHAR(255);  -- Замените VARCHAR(255) на нужный тип данных
+
+
+-- Проверка наличия всех нужных моделей
+SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel IN ('Ладомир ТА112 белый', 'Redmond RT-437 черный', 'Indesit DS 316 W белый', 'DEXP WM-F610NTMA/WW белый', 'Redmond RMC-M95 черный', 'Ладомир ТА113 чёрный', 'Indesit DS 314 W серый');
+
+-- Проверка наличия необходимых частей
+SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника';
+
+
+-- Таблица моделей
+INSERT INTO HomeTech (homeTechType, homeTechModel) VALUES
+  ('Фен', 'Ладомир ТА112 белый'),
+  ('Тостер', 'Redmond RT-437 черный'),
+  ('Холодильник', 'Indesit DS 316 W белый'),
+  ('Стиральная машина', 'DEXP WM-F610NTMA/WW белый'),
+  ('Мультиварка', 'Redmond RMC-M95 черный'),
+  ('Фен', 'Ладомир ТА113 чёрный'),
+  ('Холодильник', 'Indesit DS 314 W серый');
+
+INSERT INTO Parts (repairParts, count, masterID) VALUES
+('Мотор обдува морозильной камеры холодильника', 1, 2);
+
+
+-- Сбросить счетчик идентификатора на 1
+DBCC CHECKIDENT ('Parts', RESEED, 0);
+
+
+ALTER TABLE Parts
+ADD CONSTRAINT DF_Parts_Count DEFAULT 12 FOR count;  -- Замените 0 на желаемое значение по умолчанию
+
+ALTER TABLE Parts
+ADD CONSTRAINT FK_parst
+FOREIGN KEY (masterID) REFERENCES Customer(userID);
+
+ -- Таблица заявок
+INSERT INTO Request (startDate, typeEqipmentID, problemDescryption, statusID, completionDate, partsID, masterID, clientID) VALUES
+-- Запись 1
+('2023-06-06', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Ладомир ТА112 белый'), 'Перестал работать', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'В процессе ремонта'), NULL, 
+                (SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника'), 2, 7), -- requestID = 1
+
+-- Запись 2
+('2023-05-05', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Redmond RT-437 черный'), 'Перестал работать', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'В процессе ремонта'), NULL, 
+                (SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника'), 2, 7), -- requestID = 2
+
+-- Запись 3
+('2022-07-07', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Indesit DS 316 W белый'), 
+                'Не морозит одна из камер холодильника', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'Готова к выдаче'), 
+                '2023-01-01', 
+                (SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника'), 3, 8), -- requestID = 3
+
+-- Запись 4
+('2023-08-02', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'DEXP WM-F610NTMA/WW белый'), 
+                'Перестали работать многие режимы стирки', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'Новая заявка'), 
+                NULL, NULL, NULL, 8), -- requestID = 4
+
+-- Запись 5
+('2023-08-02', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Redmond RMC-M95 черный'), 
+                'Перестала включаться', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'Новая заявка'), 
+                NULL, NULL, NULL, 9), -- requestID = 5
+
+-- Запись 6
+('2023-08-02', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Ладомир ТА113 чёрный'), 
+                'Перестал работать', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'Готова к выдаче'), 
+                '2023-08-03', 
+                (SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника'), 2, 7), -- requestID = 6
+
+-- Запись 7
+('2023-07-09', (SELECT typeEqipmentID FROM HomeTech WHERE homeTechModel = 'Indesit DS 314 W серый'), 
+                'Гудит, но не замораживает', 
+                (SELECT statusID FROM Status WHERE requestStatus = 'Готова к выдаче'), 
+                '2023-08-03', 
+                (SELECT partsID FROM Parts WHERE repairParts = 'Мотор обдува морозильной камеры холодильника'), 2, 8); -- requestID = 7
+
+-- Сбросить счетчик идентификатора на 1
+DBCC CHECKIDENT ('Request', RESEED, 0);
+
+CREATE TABLE LoginAttempts (
+    attemptID INT PRIMARY KEY IDENTITY(1,1),  -- Уникальный идентификатор записи
+    userID INT NOT NULL,                       -- Идентификатор пользователя
+    attemptTime DATETIME NOT NULL,             -- Время попытки входа
+    successful NVARCHAR(50) NOT NULL,         -- Статус попытки ('Успешно' или 'Ошибочно')
+    FOREIGN KEY (userID) REFERENCES Customer(userID) 
+);
